@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog Crawl Dashboard — OPG</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+/* ─── OPG Theme ─── */
+:root {
+  --navy: #054D75;
+  --navy-light: #0a6d9e;
+  --magenta: #EE3F75;
+  --cyan: #00B4D8;
+  --green: #10b981;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --purple: #8b5cf6;
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --card-border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Mona Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ─── Header ─── */
+.header {
+  background: linear-gradient(135deg, var(--navy), var(--navy-light));
+  color: white;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header h1 {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.header .subtitle {
+  font-size: 11px;
+  opacity: 0.7;
+}
+.header-right {
+  font-size: 11px;
+  opacity: 0.7;
+  text-align: right;
+}
+
+/* ─── Tabs ─── */
+.tabs {
+  display: flex;
+  gap: 0;
+  background: white;
+  border-bottom: 1px solid var(--card-border);
+  padding: 0 20px;
+}
+.tab {
+  padding: 10px 18px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab:hover { color: var(--navy); }
+.tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--navy);
+  font-weight: 600;
+}
+
+/* ─── Content ─── */
+.content { padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* ─── Country Selector ─── */
+.country-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.country-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--card-border);
+  border-radius: 7px;
+  background: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.country-btn:hover { border-color: var(--navy); color: var(--navy); }
+.country-btn.active {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+}
+
+/* ─── Section Titles ─── */
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 18px 0 8px 0;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* ─── KPI Grid ─── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--text-dim);
+  transition: box-shadow 0.2s;
+}
+.kpi-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.kpi-card.severity-critical { border-left-color: var(--red); }
+.kpi-card.severity-high { border-left-color: var(--magenta); }
+.kpi-card.severity-medium { border-left-color: var(--amber); }
+.kpi-card.severity-low { border-left-color: var(--cyan); }
+.kpi-card.severity-info { border-left-color: var(--green); }
+
+.kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+}
+.kpi-delta {
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.kpi-delta.positive { color: var(--red); }
+.kpi-delta.negative { color: var(--green); }
+.kpi-delta.neutral { color: var(--text-dim); }
+.kpi-delta.info-up { color: var(--green); }
+.kpi-delta.info-down { color: var(--red); }
+.kpi-sparkline { height: 30px; margin-top: 6px; }
+
+/* ─── GSC Performance Cards ─── */
+.gsc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* ─── Charts ─── */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.chart-card.full-width {
+  grid-column: 1 / -1;
+}
+.chart-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.chart-container { position: relative; height: 220px; }
+
+/* ─── Executive Overview ─── */
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.health-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  transition: box-shadow 0.2s;
+}
+.health-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.health-country {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.health-score {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+.health-score.green { color: var(--green); }
+.health-score.amber { color: var(--amber); }
+.health-score.red { color: var(--red); }
+.health-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+.health-gauge { width: 80px; height: 80px; margin: 0 auto 8px; }
+
+/* ─── Issues Table ─── */
+.issues-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.issues-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--card-border);
+}
+.issues-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--card-border);
+}
+.issues-table tr:hover { background: #f8fafc; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.badge.critical { background: #fef2f2; color: var(--red); }
+.badge.high { background: #fdf2f8; color: var(--magenta); }
+.badge.medium { background: #fffbeb; color: var(--amber); }
+.badge.low { background: #ecfdf5; color: var(--green); }
+
+/* ─── Comparison Table ─── */
+.comparison-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 16px;
+  overflow-x: auto;
+}
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.comp-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--card-border);
+  white-space: nowrap;
+}
+.comp-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--card-border);
+}
+.comp-table td.number, .comp-table th.number { text-align: right; font-variant-numeric: tabular-nums; }
+.comp-table { table-layout: fixed; }
+.comp-table th:first-child, .comp-table td:first-child { width: 35%; }
+.comp-table tr:hover { background: #f8fafc; }
+
+/* ─── CrUX / CWV ─── */
+.cwv-source-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.cwv-source-badge.blog { background: #ecfdf5; color: var(--green); }
+.cwv-source-badge.origin { background: #fefce8; color: var(--amber); }
+.cwv-good { color: var(--green); }
+.cwv-needs-improvement { color: var(--amber); }
+.cwv-poor { color: var(--red); }
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .content { padding: 12px 14px; }
+  .chart-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div>
+      <h1>Blog Crawl Dashboard</h1>
+      <div class="subtitle">Screaming Frog Weekly Technical SEO Monitoring</div>
+    </div>
+  </div>
+  <div class="header-right" id="headerMeta"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-view="country">Country Detail</div>
+  <div class="tab" data-view="executive">Executive Overview</div>
+</div>
+
+<div class="content">
+  <!-- COUNTRY DETAIL VIEW -->
+  <div class="view active" id="view-country">
+    <div class="country-bar" id="countryBar"></div>
+
+    <div class="section-title">GSC Performance</div>
+    <div class="gsc-grid" id="gscPerformance"></div>
+
+    <div class="chart-grid" style="margin-bottom:16px;">
+      <div class="chart-card">
+        <div class="chart-title">Clicks</div>
+        <div class="chart-container"><canvas id="gscChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Average Position</div>
+        <div class="chart-container"><canvas id="posChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-title" id="cwvTitle" style="display:none;">Core Web Vitals <span id="cwvBadge"></span></div>
+    <div class="gsc-grid" id="cwvCards" style="display:none;"></div>
+    <div class="chart-grid" style="margin-bottom:16px;" id="cwvChartGrid" style="display:none;">
+      <div class="chart-card full-width">
+        <div class="chart-title">Core Web Vitals — 10 Week Trend</div>
+        <div class="chart-container"><canvas id="cwvChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-grid" style="margin-bottom:16px;">
+      <div class="chart-card full-width">
+        <div class="chart-title">Error Trends Over Time</div>
+        <div class="chart-container"><canvas id="trendChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-title">Response Codes</div>
+    <div class="kpi-grid" id="kpiResponse"></div>
+
+    <div class="section-title">Search Console — Indexing</div>
+    <div class="kpi-grid" id="kpiSearchConsole"></div>
+
+    <div class="section-title">Content Quality</div>
+    <div class="kpi-grid" id="kpiContent"></div>
+  </div>
+
+  <!-- EXECUTIVE OVERVIEW -->
+  <div class="view" id="view-executive">
+    <div class="section-title">Health Scores</div>
+    <div class="health-grid" id="healthGrid"></div>
+
+    <div class="section-title">Cross-Country Comparison (Latest Crawl)</div>
+    <div class="chart-card">
+      <div class="chart-container" style="height:300px;"><canvas id="compChart"></canvas></div>
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">Key Issues</div>
+    <div class="comparison-card">
+      <table class="issues-table" id="issuesTable">
+        <thead><tr><th>Country</th><th>Issue</th><th>Count</th><th>Severity</th><th>Delta</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">Search Performance Comparison</div>
+    <div class="comparison-card">
+      <table class="comp-table" id="perfTable">
+        <thead><tr><th>Country</th><th class="number">URLs</th><th class="number">Clicks</th><th class="number">Avg Position</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">Core Web Vitals Comparison</div>
+    <div class="comparison-card">
+      <table class="comp-table" id="cwvTable">
+        <thead><tr><th>Country</th><th class="number">LCP</th><th class="number">INP</th><th class="number">CLS</th><th>Source</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Data ───
+const DATA = {"generated_at": "2026-05-04T13:36:12.609467", "countries": {"DE MAIN": {"snapshots": [{"crawl_date": "2026.04.14.11.33.07", "crawl_date_display": "2026-04-14", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 35, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 3, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 291, "impressions": 31009, "avg_position": 7.6, "url_count": 35}}}, {"crawl_date": "2026.04.16.09.30.06", "crawl_date_display": "2026-04-16", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 35, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 3, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 243, "impressions": 26728, "avg_position": 7.8, "url_count": 35}}}, {"crawl_date": "2026.04.23.09.30.05", "crawl_date_display": "2026-04-23", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 35, "sc_not_indexed": 4, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 4, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 285, "impressions": 27293, "avg_position": 8.6, "url_count": 35}}}, {"crawl_date": "2026.04.30.09.30.07", "crawl_date_display": "2026-04-30", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 35, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 1, "sc_not_on_google": 3, "sc_has_issues": 1, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 240, "impressions": 19237, "avg_position": 11.3, "url_count": 35}}}]}, "DE-HPL": {"snapshots": [{"crawl_date": "2026.04.14.11.19.07", "crawl_date_display": "2026-04-14", "metrics": {"soft_404": 0, "4xx_errors": 10, "3xx_redirects": 10, "5xx_errors": 0, "2xx_success": 5, "sc_not_indexed": 1, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 1, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 10, "impressions": 339, "avg_position": 7.1, "url_count": 25}}}, {"crawl_date": "2026.04.16.09.25.07", "crawl_date_display": "2026-04-16", "metrics": {"soft_404": 0, "4xx_errors": 10, "3xx_redirects": 10, "5xx_errors": 0, "2xx_success": 5, "sc_not_indexed": 1, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 1, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 7, "impressions": 264, "avg_position": 7.3, "url_count": 25}}}, {"crawl_date": "2026.04.23.09.25.07", "crawl_date_display": "2026-04-23", "metrics": {"soft_404": 0, "4xx_errors": 10, "3xx_redirects": 10, "5xx_errors": 0, "2xx_success": 5, "sc_not_indexed": 1, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 1, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 5, "impressions": 306, "avg_position": 8.4, "url_count": 25}}}, {"crawl_date": "2026.04.30.09.25.07", "crawl_date_display": "2026-04-30", "metrics": {"soft_404": 0, "4xx_errors": 10, "3xx_redirects": 10, "5xx_errors": 0, "2xx_success": 5, "sc_not_indexed": 1, "sc_orphan_urls": 0, "sc_rich_invalid": 1, "sc_not_on_google": 1, "sc_has_issues": 1, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 6, "impressions": 309, "avg_position": 8.4, "url_count": 25}}}]}, "ES": {"snapshots": [{"crawl_date": "2026.04.09.11.47.08", "crawl_date_display": "2026-04-09", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 0, "5xx_errors": 0, "2xx_success": 29, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 24, "sc_not_on_google": 3, "sc_has_issues": 24, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 142, "impressions": 11532, "avg_position": 7.2, "url_count": 29}}}, {"crawl_date": "2026.04.16.09.10.09", "crawl_date_display": "2026-04-16", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 0, "5xx_errors": 0, "2xx_success": 29, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 20, "sc_not_on_google": 3, "sc_has_issues": 20, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 130, "impressions": 10324, "avg_position": 7.3, "url_count": 29}}}, {"crawl_date": "2026.04.23.09.10.08", "crawl_date_display": "2026-04-23", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 0, "5xx_errors": 0, "2xx_success": 29, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 10, "sc_not_on_google": 3, "sc_has_issues": 10, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 112, "impressions": 10496, "avg_position": 9.3, "url_count": 29}}}, {"crawl_date": "2026.04.30.09.10.06", "crawl_date_display": "2026-04-30", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 0, "5xx_errors": 0, "2xx_success": 29, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 4, "sc_not_on_google": 3, "sc_has_issues": 4, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 97, "impressions": 7667, "avg_position": 10.7, "url_count": 29}}}]}, "FR": {"snapshots": [{"crawl_date": "2026.04.09.13.39.09", "crawl_date_display": "2026-04-09", "metrics": {"soft_404": 0, "4xx_errors": 1, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 30, "sc_not_indexed": 2, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 2, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 209, "impressions": 14682, "avg_position": 9.1, "url_count": 31}}}, {"crawl_date": "2026.04.16.09.00.08", "crawl_date_display": "2026-04-16", "metrics": {"soft_404": 0, "4xx_errors": 1, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 30, "sc_not_indexed": 2, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 2, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 161, "impressions": 14402, "avg_position": 9.5, "url_count": 31}}}, {"crawl_date": "2026.04.23.09.00.08", "crawl_date_display": "2026-04-23", "metrics": {"soft_404": 0, "4xx_errors": 1, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 30, "sc_not_indexed": 2, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 2, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 162, "impressions": 15104, "avg_position": 10.3, "url_count": 31}}}, {"crawl_date": "2026.04.30.09.00.10", "crawl_date_display": "2026-04-30", "metrics": {"soft_404": 0, "4xx_errors": 1, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 29, "sc_not_indexed": 2, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 2, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 180, "impressions": 11912, "avg_position": 11.8, "url_count": 30}}}]}, "IT": {"snapshots": [{"crawl_date": "2026.04.09.11.47.07", "crawl_date_display": "2026-04-09", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 19, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 15, "sc_not_on_google": 3, "sc_has_issues": 15, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 117, "impressions": 10847, "avg_position": 4.5, "url_count": 19}}}, {"crawl_date": "2026.04.16.09.15.07", "crawl_date_display": "2026-04-16", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 19, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 9, "sc_not_on_google": 3, "sc_has_issues": 9, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 90, "impressions": 10159, "avg_position": 5.1, "url_count": 19}}}, {"crawl_date": "2026.04.23.09.15.07", "crawl_date_display": "2026-04-23", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 19, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 5, "sc_not_on_google": 3, "sc_has_issues": 5, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 100, "impressions": 10682, "avg_position": 6.5, "url_count": 19}}}, {"crawl_date": "2026.04.30.09.15.06", "crawl_date_display": "2026-04-30", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 19, "sc_not_indexed": 3, "sc_orphan_urls": 0, "sc_rich_invalid": 2, "sc_not_on_google": 3, "sc_has_issues": 2, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 93, "impressions": 8219, "avg_position": 7.4, "url_count": 19}}}]}, "NL": {"snapshots": [{"crawl_date": "2026.04.09.13.40.08", "crawl_date_display": "2026-04-09", "metrics": {"soft_404": 0, "4xx_errors": 1, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 55, "sc_not_indexed": 6, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 6, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 343, "impressions": 26680, "avg_position": 10.4, "url_count": 55}}}, {"crawl_date": "2026.04.16.09.20.07", "crawl_date_display": "2026-04-16", "metrics": {"soft_404": 0, "4xx_errors": 1, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 55, "sc_not_indexed": 6, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 6, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 299, "impressions": 19494, "avg_position": 10.5, "url_count": 55}}}, {"crawl_date": "2026.04.23.09.20.07", "crawl_date_display": "2026-04-23", "metrics": {"soft_404": 0, "4xx_errors": 1, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 55, "sc_not_indexed": 6, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 6, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 351, "impressions": 19025, "avg_position": 12.4, "url_count": 55}}}, {"crawl_date": "2026.04.30.09.20.04", "crawl_date_display": "2026-04-30", "metrics": {"soft_404": 0, "4xx_errors": 1, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 55, "sc_not_indexed": 0, "sc_orphan_urls": 0, "sc_rich_invalid": 0, "sc_not_on_google": 0, "sc_has_issues": 0, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 308, "impressions": 16125, "avg_position": 15.7, "url_count": 55}}}]}, "PL": {"snapshots": [{"crawl_date": "2026.04.10.11.41.09", "crawl_date_display": "2026-04-10", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 9, "sc_not_indexed": 1, "sc_orphan_urls": 0, "sc_rich_invalid": 6, "sc_not_on_google": 1, "sc_has_issues": 6, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 16, "impressions": 2170, "avg_position": 6.3, "url_count": 9}}}, {"crawl_date": "2026.04.16.09.05.07", "crawl_date_display": "2026-04-16", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 9, "sc_not_indexed": 1, "sc_orphan_urls": 0, "sc_rich_invalid": 5, "sc_not_on_google": 1, "sc_has_issues": 5, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 11, "impressions": 1883, "avg_position": 6.4, "url_count": 9}}}, {"crawl_date": "2026.04.23.09.05.09", "crawl_date_display": "2026-04-23", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 9, "sc_not_indexed": 1, "sc_orphan_urls": 0, "sc_rich_invalid": 3, "sc_not_on_google": 1, "sc_has_issues": 3, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 6, "impressions": 1901, "avg_position": 8.0, "url_count": 9}}}, {"crawl_date": "2026.04.30.09.05.07", "crawl_date_display": "2026-04-30", "metrics": {"soft_404": 0, "4xx_errors": 0, "3xx_redirects": 1, "5xx_errors": 0, "2xx_success": 9, "sc_not_indexed": 1, "sc_orphan_urls": 0, "sc_rich_invalid": 2, "sc_not_on_google": 1, "sc_has_issues": 2, "sc_canonical": 0, "sd_errors": 0, "sd_warnings": 0, "over_2mb": 0, "sc_all": {"clicks": 10, "impressions": 1494, "avg_position": 9.6, "url_count": 9}}}]}}};
+const METRIC_DEFS = {"soft_404": {"label": "Soft 404s", "category": "content", "severity": "high", "method": "row_count"}, "4xx_errors": {"label": "4xx Errors", "category": "response", "severity": "high", "method": "row_count"}, "3xx_redirects": {"label": "3xx Redirects", "category": "response", "severity": "medium", "method": "row_count"}, "5xx_errors": {"label": "5xx Errors", "category": "response", "severity": "critical", "method": "row_count"}, "2xx_success": {"label": "2xx Success", "category": "response", "severity": "info", "method": "row_count"}, "sc_not_indexed": {"label": "Not Indexed", "category": "search_console", "severity": "high", "method": "row_count"}, "sc_orphan_urls": {"label": "Orphan URLs", "category": "search_console", "severity": "medium", "method": "row_count"}, "sc_rich_invalid": {"label": "Rich Result Invalid", "category": "search_console", "severity": "medium", "method": "row_count"}, "sc_not_on_google": {"label": "Not on Google", "category": "search_console", "severity": "high", "method": "row_count"}, "sc_has_issues": {"label": "Has Issues", "category": "search_console", "severity": "medium", "method": "row_count"}, "sc_canonical": {"label": "Canonical Issues", "category": "search_console", "severity": "medium", "method": "row_count"}, "sd_errors": {"label": "SD Errors", "category": "structured_data", "severity": "high", "method": "row_count"}, "sd_warnings": {"label": "SD Warnings", "category": "structured_data", "severity": "low", "method": "row_count"}, "over_2mb": {"label": "Over 2MB", "category": "content", "severity": "low", "method": "row_count"}, "sc_all": {"label": "GSC Performance", "category": "search_console", "severity": "info", "method": "sc_aggregate"}};
+const FLAGS = {"NL": "🇳🇱", "DE": "🇩🇪", "FR": "🇫🇷", "BE": "🇧🇪", "UK": "🇬🇧", "AT": "🇦🇹", "IT": "🇮🇹", "ES": "🇪🇸", "DK": "🇩🇰", "SE": "🇸🇪", "NO": "🇳🇴", "PL": "🇵🇱", "CH": "🇨🇭", "DE MAIN": "🇩🇪", "DE-HPL": "🇩🇪"};
+const NAMES = {"NL": "Nederland", "DE": "Deutschland", "FR": "France", "BE": "België", "UK": "United Kingdom", "AT": "Österreich", "IT": "Italia", "ES": "España", "DK": "Danmark", "SE": "Sverige", "NO": "Norge", "PL": "Polska", "CH": "Schweiz", "DE MAIN": "DE Main", "DE-HPL": "DE HPL"};
+const CRUX = {"DE MAIN": {"dates": ["2026-02-28", "2026-03-07", "2026-03-14", "2026-03-21", "2026-03-28", "2026-04-04", "2026-04-11", "2026-04-18", "2026-04-25", "2026-05-02"], "lcp": [3043, 3033, 3120, 3189, 3187, 3173, 3054, 2995, 2966, 2946], "inp": [225, 233, 233, 236, 236, 237, 239, 241, 239, 240], "cls": [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.0, 0.01, 0.01, 0.01], "source": "origin", "domain": "kunststoffplattenonline.de"}, "DE-HPL": {"dates": ["2026-02-28", "2026-03-07", "2026-03-14", "2026-03-21", "2026-03-28", "2026-04-04", "2026-04-11", "2026-04-18", "2026-04-25", "2026-05-02"], "lcp": [2386, 2384, 2424, 2453, 2403, 2330, 2167, 2215, 2194, 2276], "inp": [221, 240, 257, 254, 242, 237, 215, 230, 233, 236], "cls": [0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "source": "origin", "domain": "hplplattenshop.de"}, "ES": {"dates": ["2026-02-28", "2026-03-07", "2026-03-14", "2026-03-21", "2026-03-28", "2026-04-04", "2026-04-11", "2026-04-18", "2026-04-25", "2026-05-02"], "lcp": [2777, 2795, 2820, 2802, 2829, 2897, 2882, 2912, 2936, 2938], "inp": [215, 225, 229, 232, 235, 246, 250, 254, 256, 254], "cls": [0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01], "source": "origin", "domain": "planchasdeplastico.es"}, "FR": {"dates": ["2026-02-28", "2026-03-07", "2026-03-14", "2026-03-21", "2026-03-28", "2026-04-04", "2026-04-11", "2026-04-18", "2026-04-25", "2026-05-02"], "lcp": [2667, 2529, 2364, 2346, 2329, 2333, 2299, 2324, 2370, 2432], "inp": [197, 201, 202, 202, 202, 204, 199, 200, 204, 206], "cls": [0.05, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01], "source": "origin", "domain": "plaqueplastique.fr"}, "IT": {"dates": ["2026-02-28", "2026-03-07", "2026-03-14", "2026-03-21", "2026-03-28", "2026-04-04", "2026-04-11", "2026-04-18", "2026-04-25", "2026-05-02"], "lcp": [3016, 3025, 2885, 2811, 2874, 2877, 2902, 2899, 2878, 2896], "inp": [207, 208, 211, 219, 228, 229, 231, 231, 233, 237], "cls": [0.03, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01], "source": "origin", "domain": "pannelliplastica.it"}, "NL": {"dates": ["2026-02-28", "2026-03-07", "2026-03-14", "2026-03-21", "2026-03-28", "2026-04-04", "2026-04-11", "2026-04-18", "2026-04-25", "2026-05-02"], "lcp": [2627, 2652, 2640, 2661, 2672, 2638, 2568, 2485, 2304, 2233], "inp": [180, 183, 186, 187, 187, 183, 178, 174, 174, 177], "cls": [0.02, 0.01, 0.01, 0.01, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02], "source": "origin", "domain": "kunststofplatenshop.nl"}, "PL": {"dates": ["2026-02-28", "2026-03-07", "2026-03-14", "2026-03-21", "2026-03-28", "2026-04-04", "2026-04-11", "2026-04-18", "2026-04-25", "2026-05-02"], "lcp": [1865, 1913, 1869, 1846, 1843, 1873, 1975, 2116, 2186, 2261], "inp": [141, 152, 151, 149, 154, 158, 166, 169, 166, 163], "cls": [0.03, 0.02, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01], "source": "origin", "domain": "plytyplastikowe.pl"}};
+
+// Metric display order per category
+const RESPONSE_METRICS = ['2xx_success','3xx_redirects','4xx_errors','5xx_errors'];
+const SC_METRICS = ['sc_not_indexed','sc_not_on_google','sc_has_issues','sc_rich_invalid','sc_canonical','sc_orphan_urls','soft_404'];
+const CONTENT_METRICS = ['sd_errors','sd_warnings','over_2mb'];
+const ERROR_METRICS = ['4xx_errors','5xx_errors','3xx_redirects','sc_not_indexed','sc_not_on_google','sc_has_issues','sc_rich_invalid','sc_canonical','sc_orphan_urls','soft_404','sd_errors','sd_warnings','over_2mb'];
+
+const CHART_COLORS = [
+  '#EE3F75','#054D75','#00B4D8','#f59e0b','#10b981','#8b5cf6',
+  '#ef4444','#06b6d4','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16'
+];
+
+let currentCountry = null;
+let charts = {};
+
+// ─── Utility ───
+function getFlag(code) { return FLAGS[code] || ''; }
+function getName(code) { return NAMES[code] || code; }
+
+function getLatestSnapshot(code) {
+  const snaps = DATA.countries[code]?.snapshots;
+  return snaps && snaps.length > 0 ? snaps[snaps.length - 1] : null;
+}
+
+function getPrevSnapshot(code) {
+  const snaps = DATA.countries[code]?.snapshots;
+  return snaps && snaps.length > 1 ? snaps[snaps.length - 2] : null;
+}
+
+function getMetricValue(snapshot, metricId) {
+  if (!snapshot) return null;
+  const v = snapshot.metrics[metricId];
+  if (v === undefined || v === null) return null;
+  return v;
+}
+
+function computeDelta(current, previous, metricId) {
+  if (current === null || previous === null) return null;
+  const def = METRIC_DEFS[metricId];
+  if (def.method === 'sc_aggregate') return null;
+  return current - previous;
+}
+
+function computeHealthScore(snapshot) {
+  if (!snapshot) return 0;
+  const m = snapshot.metrics;
+  // Use total crawlable URLs as baseline for relative scoring
+  const totalUrls = Math.max(m['2xx_success'] || 1, 1);
+  let score = 100;
+  // Penalties are weighted by (issue_count / total_urls) * weight
+  // This normalises across domain sizes
+  const pct = (key) => ((m[key] || 0) / totalUrls) * 100;
+  score -= pct('5xx_errors') * 1.5;    // 10% 5xx = -15 points
+  score -= pct('4xx_errors') * 0.5;    // 10% 4xx = -5 points
+  score -= pct('soft_404') * 0.5;      // 10% soft 404 = -5 points
+  score -= pct('sc_not_indexed') * 0.4; // 10% not indexed = -4 points
+  score -= pct('sc_not_on_google') * 0.4;
+  score -= pct('sd_errors') * 0.3;
+  score -= pct('sc_has_issues') * 0.2;
+  score -= pct('sc_rich_invalid') * 0.2;
+  score -= pct('sc_canonical') * 0.2;
+  score -= pct('sd_warnings') * 0.1;
+  score -= pct('3xx_redirects') * 0.1;
+  score -= pct('over_2mb') * 0.1;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+// ─── Tab Switching ───
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-' + tab.dataset.view).classList.add('active');
+    if (tab.dataset.view === 'executive') renderExecutive();
+  });
+});
+
+// ─── Country Bar ───
+function initCountryBar() {
+  const bar = document.getElementById('countryBar');
+  const codes = Object.keys(DATA.countries).sort();
+  bar.innerHTML = '';
+  codes.forEach((code, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'country-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = getFlag(code) + ' ' + code;
+    btn.dataset.code = code;
+    btn.addEventListener('click', () => selectCountry(code));
+    bar.appendChild(btn);
+  });
+  if (codes.length > 0) selectCountry(codes[0]);
+}
+
+function selectCountry(code) {
+  currentCountry = code;
+  document.querySelectorAll('.country-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.code === code);
+  });
+  renderCountryDetail(code);
+}
+
+// ─── KPI Cards ───
+function renderKPICard(metricId, snapshot, prevSnapshot) {
+  const def = METRIC_DEFS[metricId];
+  const val = getMetricValue(snapshot, metricId);
+  const prevVal = getMetricValue(prevSnapshot, metricId);
+  const delta = computeDelta(val, prevVal, metricId);
+  const isInfoMetric = (def.severity === 'info');
+
+  let deltaHtml = '';
+  if (delta !== null) {
+    let cls = 'neutral';
+    let arrow = '';
+    if (delta > 0) {
+      cls = isInfoMetric ? 'info-up' : 'positive';
+      arrow = '▲ +';
+    } else if (delta < 0) {
+      cls = isInfoMetric ? 'info-down' : 'negative';
+      arrow = '▼ ';
+    }
+    if (delta !== 0) {
+      deltaHtml = `<div class="kpi-delta ${cls}">${arrow}${delta} vs prev</div>`;
+    } else {
+      deltaHtml = `<div class="kpi-delta neutral">— no change</div>`;
+    }
+  }
+
+  // Sparkline data
+  const snaps = DATA.countries[currentCountry]?.snapshots || [];
+  const sparkData = snaps.map(s => getMetricValue(s, metricId)).filter(v => v !== null);
+  const sparkId = 'spark-' + metricId + '-' + Math.random().toString(36).substr(2,6);
+
+  return `<div class="kpi-card severity-${def.severity}">
+    <div class="kpi-label">${def.label}</div>
+    <div class="kpi-value">${val !== null ? val.toLocaleString() : '—'}</div>
+    ${deltaHtml}
+    ${sparkData.length > 1 ? `<div class="kpi-sparkline"><canvas id="${sparkId}" data-values="${sparkData.join(',')}"></canvas></div>` : ''}
+  </div>`;
+}
+
+function renderGSCCards(snapshot, prevSnapshot) {
+  const sc = snapshot?.metrics?.sc_all;
+  const prevSc = prevSnapshot?.metrics?.sc_all;
+  if (!sc) return '';
+
+  function gscCard(label, value, prevValue, format, invertDelta) {
+    let formatted = format === 'pos' ? value.toFixed(1) : value.toLocaleString();
+    let deltaHtml = '';
+    if (prevValue !== undefined && prevValue !== null) {
+      const d = value - prevValue;
+      if (d !== 0) {
+        let cls, arrow;
+        if (invertDelta) {
+          cls = d < 0 ? 'info-up' : 'info-down';  // lower position = better
+        } else {
+          cls = d > 0 ? 'info-up' : 'info-down';
+        }
+        arrow = d > 0 ? '▲ +' : '▼ ';
+        const dFormatted = format === 'pos' ? d.toFixed(1) : d.toLocaleString();
+        deltaHtml = `<div class="kpi-delta ${cls}">${arrow}${dFormatted}</div>`;
+      }
+    }
+    return `<div class="kpi-card severity-info">
+      <div class="kpi-label">${label}</div>
+      <div class="kpi-value">${formatted}</div>
+      ${deltaHtml}
+    </div>`;
+  }
+
+  return gscCard('Total Clicks', sc.clicks, prevSc?.clicks, 'int', false) +
+         gscCard('Avg Position', sc.avg_position, prevSc?.avg_position, 'pos', true) +
+         gscCard('URLs in GSC', sc.url_count, prevSc?.url_count, 'int', false);
+}
+
+// ─── Sparklines ───
+function renderSparklines() {
+  document.querySelectorAll('.kpi-sparkline canvas').forEach(canvas => {
+    const values = canvas.dataset.values.split(',').map(Number);
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: values.map((_, i) => i),
+        datasets: [{ data: values, borderColor: '#054D75', borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: { x: { display: false }, y: { display: false } }
+      }
+    });
+  });
+}
+
+// ─── Country Detail Rendering ───
+function renderCountryDetail(code) {
+  const snap = getLatestSnapshot(code);
+  const prev = getPrevSnapshot(code);
+
+  // KPI grids
+  document.getElementById('kpiResponse').innerHTML = RESPONSE_METRICS.map(m => renderKPICard(m, snap, prev)).join('');
+  document.getElementById('kpiSearchConsole').innerHTML = SC_METRICS.map(m => renderKPICard(m, snap, prev)).join('');
+  document.getElementById('kpiContent').innerHTML = CONTENT_METRICS.map(m => renderKPICard(m, snap, prev)).join('');
+  document.getElementById('gscPerformance').innerHTML = renderGSCCards(snap, prev);
+
+  renderSparklines();
+  renderTrendChart(code);
+  renderGSCCharts(code);
+  renderCWV(code);
+}
+
+// ─── Trend Chart ───
+function renderTrendChart(code) {
+  if (charts.trend) charts.trend.destroy();
+  const snaps = DATA.countries[code]?.snapshots || [];
+  const labels = snaps.map(s => s.crawl_date_display);
+
+  const datasets = ERROR_METRICS.map((m, i) => ({
+    label: METRIC_DEFS[m].label,
+    data: snaps.map(s => s.metrics[m] ?? 0),
+    borderColor: CHART_COLORS[i % CHART_COLORS.length],
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    pointRadius: snaps.length === 1 ? 4 : 0,
+    pointHoverRadius: 4,
+    tension: 0.3,
+    hidden: !['4xx_errors','5xx_errors','sc_not_indexed','sc_not_on_google','sd_errors'].includes(m),
+  }));
+
+  charts.trend = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 10 } } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { color: '#f1f5f9' } }
+      }
+    }
+  });
+}
+
+// ─── GSC Charts ───
+function renderGSCCharts(code) {
+  if (charts.gsc) charts.gsc.destroy();
+  if (charts.pos) charts.pos.destroy();
+  const snaps = DATA.countries[code]?.snapshots || [];
+  const labels = snaps.map(s => s.crawl_date_display);
+
+  charts.gsc = new Chart(document.getElementById('gscChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Clicks',
+        data: snaps.map(s => s.metrics.sc_all?.clicks ?? 0),
+        borderColor: '#054D75',
+        backgroundColor: 'rgba(5,77,117,0.1)',
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointBackgroundColor: '#054D75',
+        pointHoverRadius: 6,
+        tension: 0.3,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { color: '#f1f5f9' } }
+      }
+    }
+  });
+
+  charts.pos = new Chart(document.getElementById('posChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Avg Position',
+        data: snaps.map(s => s.metrics.sc_all?.avg_position ?? 0),
+        borderColor: '#EE3F75',
+        backgroundColor: 'rgba(238,63,117,0.1)',
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointBackgroundColor: '#EE3F75',
+        pointHoverRadius: 6,
+        tension: 0.3,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { reverse: true, grid: { color: '#f1f5f9' }, title: { display: true, text: 'Position (lower = better)', font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ─── Core Web Vitals ───
+function cwvStatus(metric, value) {
+  if (value === null || value === undefined) return 'neutral';
+  if (metric === 'lcp') return value <= 2500 ? 'good' : value <= 4000 ? 'needs-improvement' : 'poor';
+  if (metric === 'inp') return value <= 200 ? 'good' : value <= 500 ? 'needs-improvement' : 'poor';
+  if (metric === 'cls') return value <= 0.1 ? 'good' : value <= 0.25 ? 'needs-improvement' : 'poor';
+  return 'neutral';
+}
+
+function cwvFormat(metric, value) {
+  if (value === null || value === undefined) return '—';
+  if (metric === 'cls') return value.toFixed(2);
+  return Math.round(value).toLocaleString() + 'ms';
+}
+
+function renderCWV(code) {
+  const crux = CRUX[code];
+  const title = document.getElementById('cwvTitle');
+  const cards = document.getElementById('cwvCards');
+  const chartGrid = document.getElementById('cwvChartGrid');
+  const badge = document.getElementById('cwvBadge');
+
+  if (!crux || !crux.lcp || crux.lcp.length === 0) {
+    title.style.display = 'none';
+    cards.style.display = 'none';
+    chartGrid.style.display = 'none';
+    return;
+  }
+
+  title.style.display = '';
+  cards.style.display = '';
+  chartGrid.style.display = '';
+
+  // Source badge
+  if (crux.source === 'origin') {
+    badge.innerHTML = `<span class="cwv-source-badge origin">Full domain — blog data insufficient</span>`;
+  } else {
+    badge.innerHTML = `<span class="cwv-source-badge blog">/blog/ data</span>`;
+  }
+
+  // KPI cards for latest values
+  const metrics = [
+    { key: 'lcp', label: 'LCP', unit: 'ms', thresholds: [2500, 4000] },
+    { key: 'inp', label: 'INP', unit: 'ms', thresholds: [200, 500] },
+    { key: 'cls', label: 'CLS', unit: '', thresholds: [0.1, 0.25] },
+  ];
+
+  cards.innerHTML = metrics.map(m => {
+    const values = crux[m.key] || [];
+    const latest = values.length > 0 ? values[values.length - 1] : null;
+    const prev = values.length > 1 ? values[values.length - 2] : null;
+    const status = cwvStatus(m.key, latest);
+    const formatted = cwvFormat(m.key, latest);
+
+    let deltaHtml = '';
+    if (latest !== null && prev !== null) {
+      const d = m.key === 'cls' ? latest - prev : latest - prev;
+      if (Math.abs(d) > 0.001) {
+        const better = d < 0;
+        const cls = better ? 'negative' : 'positive';
+        const arrow = d > 0 ? '▲ +' : '▼ ';
+        const df = m.key === 'cls' ? d.toFixed(2) : Math.round(d) + 'ms';
+        deltaHtml = `<div class="kpi-delta ${cls}">${arrow}${df}</div>`;
+      }
+    }
+
+    return `<div class="kpi-card severity-info" style="border-left-color: var(--${status === 'good' ? 'green' : status === 'needs-improvement' ? 'amber' : 'red'});">
+      <div class="kpi-label">${m.label}</div>
+      <div class="kpi-value cwv-${status}">${formatted}</div>
+      ${deltaHtml}
+      <div style="font-size:9px;color:var(--text-dim);margin-top:2px;">${status === 'good' ? 'Good' : status === 'needs-improvement' ? 'Needs improvement' : 'Poor'}</div>
+    </div>`;
+  }).join('');
+
+  // CWV trend chart
+  if (charts.cwv) charts.cwv.destroy();
+  const labels = crux.dates || [];
+
+  charts.cwv = new Chart(document.getElementById('cwvChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'LCP (ms)',
+          data: crux.lcp,
+          borderColor: '#054D75',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointRadius: 3,
+          tension: 0.3,
+          yAxisID: 'y',
+        },
+        {
+          label: 'INP (ms)',
+          data: crux.inp,
+          borderColor: '#00B4D8',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointRadius: 3,
+          tension: 0.3,
+          yAxisID: 'y',
+        },
+        {
+          label: 'CLS',
+          data: crux.cls,
+          borderColor: '#EE3F75',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointRadius: 3,
+          tension: 0.3,
+          yAxisID: 'y1',
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 10 } } },
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9' },
+          title: { display: true, text: 'LCP / INP (ms)', font: { size: 10 } },
+        },
+        y1: {
+          position: 'right',
+          beginAtZero: true,
+          grid: { display: false },
+          title: { display: true, text: 'CLS', font: { size: 10 } },
+        }
+      }
+    }
+  });
+}
+
+// ─── Executive Overview ───
+function renderExecutive() {
+  const codes = Object.keys(DATA.countries).sort();
+
+  // Health scores
+  const healthGrid = document.getElementById('healthGrid');
+  healthGrid.innerHTML = codes.map(code => {
+    const snap = getLatestSnapshot(code);
+    const score = computeHealthScore(snap);
+    const cls = score >= 80 ? 'green' : score >= 60 ? 'amber' : 'red';
+    const label = score >= 80 ? 'Healthy' : score >= 60 ? 'Needs Attention' : 'Critical';
+    return `<div class="health-card">
+      <div class="health-country">${getFlag(code)} ${getName(code)}</div>
+      <div class="health-score ${cls}">${score}</div>
+      <div class="health-label">${label}</div>
+    </div>`;
+  }).join('');
+
+  // Comparison chart
+  renderComparisonChart(codes);
+
+  // Issues table
+  renderIssuesTable(codes);
+
+  // Performance table
+  renderPerfTable(codes);
+
+  // CWV comparison
+  renderCWVComparison(codes);
+}
+
+function renderComparisonChart(codes) {
+  if (charts.comp) charts.comp.destroy();
+  const metrics = ['4xx_errors','5xx_errors','sc_not_indexed','sc_not_on_google','sc_rich_invalid','sd_errors'];
+
+  const datasets = codes.map((code, i) => ({
+    label: getFlag(code) + ' ' + code,
+    data: metrics.map(m => {
+      const snap = getLatestSnapshot(code);
+      return snap?.metrics[m] ?? 0;
+    }),
+    backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
+    borderRadius: 4,
+  }));
+
+  charts.comp = new Chart(document.getElementById('compChart'), {
+    type: 'bar',
+    data: {
+      labels: metrics.map(m => METRIC_DEFS[m].label),
+      datasets,
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 10 } } } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderIssuesTable(codes) {
+  const tbody = document.querySelector('#issuesTable tbody');
+  const issues = [];
+
+  codes.forEach(code => {
+    const snap = getLatestSnapshot(code);
+    const prev = getPrevSnapshot(code);
+    if (!snap) return;
+
+    ERROR_METRICS.forEach(m => {
+      const val = snap.metrics[m] ?? 0;
+      if (val === 0) return;
+      const def = METRIC_DEFS[m];
+      const prevVal = prev?.metrics[m] ?? null;
+      const delta = prevVal !== null ? val - prevVal : null;
+      issues.push({ code, metric: m, label: def.label, count: val, severity: def.severity, delta });
+    });
+  });
+
+  // Sort by severity then count
+  const sevOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+  issues.sort((a, b) => (sevOrder[a.severity] ?? 9) - (sevOrder[b.severity] ?? 9) || b.count - a.count);
+
+  tbody.innerHTML = issues.map(issue => {
+    let deltaHtml = '—';
+    if (issue.delta !== null && issue.delta !== 0) {
+      const cls = issue.delta > 0 ? 'positive' : 'negative';
+      const arrow = issue.delta > 0 ? '▲ +' : '▼ ';
+      deltaHtml = `<span class="kpi-delta ${cls}">${arrow}${issue.delta}</span>`;
+    }
+    return `<tr>
+      <td>${getFlag(issue.code)} ${issue.code}</td>
+      <td>${issue.label}</td>
+      <td style="font-weight:600;">${issue.count}</td>
+      <td><span class="badge ${issue.severity}">${issue.severity}</span></td>
+      <td>${deltaHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPerfTable(codes) {
+  const tbody = document.querySelector('#perfTable tbody');
+  const rows = codes.map(code => {
+    const snap = getLatestSnapshot(code);
+    const sc = snap?.metrics?.sc_all;
+    return {
+      code,
+      urls: sc?.url_count ?? 0,
+      clicks: sc?.clicks ?? 0,
+      position: sc?.avg_position ?? 0,
+    };
+  }).sort((a, b) => b.clicks - a.clicks);
+
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>${getFlag(r.code)} ${getName(r.code)}</td>
+    <td class="number">${r.urls}</td>
+    <td class="number" style="font-weight:600;">${r.clicks.toLocaleString()}</td>
+    <td class="number">${r.position.toFixed(1)}</td>
+  </tr>`).join('');
+}
+
+function renderCWVComparison(codes) {
+  const tbody = document.querySelector('#cwvTable tbody');
+  const rows = codes.filter(c => CRUX[c]).map(code => {
+    const crux = CRUX[code];
+    const lcp = crux.lcp?.length ? crux.lcp[crux.lcp.length - 1] : null;
+    const inp = crux.inp?.length ? crux.inp[crux.inp.length - 1] : null;
+    const cls = crux.cls?.length ? crux.cls[crux.cls.length - 1] : null;
+    return { code, lcp, inp, cls, source: crux.source };
+  });
+
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>${getFlag(r.code)} ${getName(r.code)}</td>
+    <td class="number cwv-${cwvStatus('lcp', r.lcp)}" style="font-weight:600;">${cwvFormat('lcp', r.lcp)}</td>
+    <td class="number cwv-${cwvStatus('inp', r.inp)}" style="font-weight:600;">${cwvFormat('inp', r.inp)}</td>
+    <td class="number cwv-${cwvStatus('cls', r.cls)}" style="font-weight:600;">${cwvFormat('cls', r.cls)}</td>
+    <td><span class="cwv-source-badge ${r.source}">${r.source === 'blog' ? '/blog/' : 'Full domain'}</span></td>
+  </tr>`).join('');
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim);">No CrUX data available</td></tr>';
+  }
+}
+
+// ─── Header Meta ───
+function renderHeaderMeta() {
+  const codes = Object.keys(DATA.countries);
+  const allSnaps = codes.flatMap(c => DATA.countries[c].snapshots);
+  const latest = allSnaps.length > 0 ? allSnaps.reduce((a, b) => a.crawl_date > b.crawl_date ? a : b) : null;
+  document.getElementById('headerMeta').innerHTML =
+    `${codes.length} countries &middot; Last crawl: ${latest?.crawl_date_display ?? 'N/A'}<br>Generated: ${DATA.generated_at?.split('T')[0] ?? 'N/A'}`;
+}
+
+// ─── Init ───
+renderHeaderMeta();
+initCountryBar();
+</script>
+</body>
+</html>
